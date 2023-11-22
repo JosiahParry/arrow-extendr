@@ -1,5 +1,6 @@
 use arrow::array::Float64Array;
-use arrow::ffi::to_ffi;
+
+
 use extendr_api::{prelude::*};
 
 use arrow::array::Int32Array;
@@ -40,7 +41,7 @@ fn test_f64() -> Result<Robj> {
 }
 
 use arrow::datatypes::Field;
-use arrow::datatypes::DataType;
+use arrow::datatypes::{DataType, TimeUnit};
 
 #[extendr]
 /// @export
@@ -54,7 +55,6 @@ fn test_field() -> Result<Robj> {
 use arrow::{datatypes::Schema, record_batch::RecordBatch};
 use std::sync::Arc;
 
-use arrow::array::Array;
 #[extendr]
 /// @export
 fn test_record_batch() -> Result<Robj>{
@@ -71,6 +71,24 @@ fn test_record_batch() -> Result<Robj>{
     batch.to_arrow_robj()
 }
 
+
+#[extendr]
+/// @export
+fn test_schema() -> Result<Robj> {
+    let field_a = Field::new("a", DataType::Date64, false);
+    let field_b = Field::new("a", DataType::Int64, true);
+    let field_c = Field::new("b", DataType::Boolean, false);
+
+    let schema = Schema::new(vec![field_a, field_b, field_c]);
+    schema.to_arrow_robj()
+}
+
+#[extendr]
+/// @export
+fn test_datatype() -> Result<Robj> {
+    let dt = DataType::Timestamp(TimeUnit::Second, None);
+    dt.to_arrow_robj()
+}
 // Macro to generate exports.
 // This ensures exported functions are registered with R.
 // See corresponding C code in `entrypoint.c`.
@@ -81,4 +99,6 @@ extendr_module! {
     fn test_f64;
     fn test_field;
     fn test_record_batch;
+    fn test_schema;
+    fn test_datatype;
 }

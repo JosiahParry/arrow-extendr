@@ -1,9 +1,10 @@
 use extendr_api::prelude::*;
 use arrow::{
     array::{PrimitiveArray, Array},
-    datatypes::{ArrowPrimitiveType, Field},
+    datatypes::{ArrowPrimitiveType, DataType, Field, Schema},
     ffi::{to_ffi, FFI_ArrowArray, FFI_ArrowSchema}, 
-    record_batch::RecordBatch
+    ffi_stream::FFI_ArrowArrayStream,
+    record_batch::{RecordBatch, RecordBatchReader, RecordBatchIterator}
 };
 
 
@@ -54,10 +55,14 @@ impl ToArrowRobj for Field {
     }
 }
 
-use arrow::ffi_stream::FFI_ArrowArrayStream;
-use arrow::record_batch::RecordBatchIterator;
-use arrow::record_batch::RecordBatchReader;
-
+// RECORD BATCH
+// RecordBatch is converted into RecordBatchIterator
+// Which is boxed and sent as a stream then processes the stream
+// Record batch impl
+// https://github.com/apache/arrow-rs/blob/200e8c80084442d9579e00967e407cd83191565d/arrow/src/pyarrow.rs#L376C1-L377C4
+// Impl for Box<dyn RecordBatchReader + Send>
+// https://github.com/apache/arrow-rs/blob/200e8c80084442d9579e00967e407cd83191565d/arrow/src/pyarrow.rs#L426
+// we'll have to recordbatchread$import_from_c which takes a stream
 impl ToArrowRobj for RecordBatch {
     fn to_arrow_robj(&self) -> Result<Robj> {
         let reader = RecordBatchIterator::new(vec![Ok(self.clone())], self.schema().clone());
@@ -81,19 +86,40 @@ impl ToArrowRobj for RecordBatch {
     }
 }
 
+impl ToArrowRobj for Schema {
+    fn to_arrow_robj(&self) -> Result<Robj> {
+        // Import function from R
+        let import_from_c = R!("arrow::Schema$import_from_c")
+            .unwrap()
+            .as_function()
+            .unwrap();
 
-// RECORD BATCH
-// RecordBatch is converted into RecordBatchIterator
-// Which is boxed and 
+        let ffi_schema = FFI_ArrowSchema::try_from(self)
+            .expect("valid Schema");
 
-// Record batch impl
-// https://github.com/apache/arrow-rs/blob/200e8c80084442d9579e00967e407cd83191565d/arrow/src/pyarrow.rs#L376C1-L377C4
-// Impl for Box<dyn RecordBatchReader + Send>
-// https://github.com/apache/arrow-rs/blob/200e8c80084442d9579e00967e407cd83191565d/arrow/src/pyarrow.rs#L426
-// we'll have to recordbatchread$import_from_c which takes a stream
+        let ffi_schema_ptr = &ffi_schema as *const FFI_ArrowSchema as usize;
+        let schema_addr_chr = ffi_schema_ptr.to_string();
+        
+        import_from_c.call(pairlist!(schema_addr_chr))
+    }
+}
 
+impl ToArrowRobj for DataType {
+    fn to_arrow_robj(&self) -> Result<Robj> {
+        // Import function from R
+        let import_from_c = R!("arrow:::DataType$import_from_c")
+            .unwrap()
+            .as_function()
+            .unwrap();
 
-// TODO 
-// arrow::RecordBatch$import_from_c()
-// arrow::Schema$import_from_c()
+        let ffi_schema = FFI_ArrowSchema::try_from(self)
+            .expect("valid Schema");
+
+        let ffi_schema_ptr = &ffi_schema as *const FFI_ArrowSchema as usize;
+        let schema_addr_chr = ffi_schema_ptr.to_string();
+        
+        import_from_c.call(pairlist!(schema_addr_chr))
+
+    }
+}
 // arrow:::DataType$import_from_c()
