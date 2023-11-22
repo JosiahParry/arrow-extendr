@@ -15,10 +15,16 @@ NULL
 find_narrow <- function() invisible(.Call(wrap__find_narrow))
 
 #' @export
-export_array <- function() .Call(wrap__export_array)
+test_i32 <- function() .Call(wrap__test_i32)
 
 #' @export
-toarrow_trait <- function() .Call(wrap__toarrow_trait)
+test_f64 <- function() .Call(wrap__test_f64)
+
+#' @export
+test_field <- function() .Call(wrap__test_field)
+
+#' @export
+test_record_batch <- function() .Call(wrap__test_record_batch)
 
 
 # nolint end

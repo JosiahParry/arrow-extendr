@@ -73,12 +73,11 @@ impl ToArrowRobj for RecordBatch {
 
         // the resultant object needs to call the `read_next_batch()` method
         let res = import_from_c.call(pairlist!(stream_ptr.to_string()))
-            .expect("successful creation of RecordBatchReader");
+            .expect("successful creation of `RecordBatchReader`");
 
         res.dollar("read_next_batch")
-            .expect("read_next_batch() method to be found")
+            .expect("`read_next_batch()` method to be found")
             .call(pairlist!())
-
     }
 }
 

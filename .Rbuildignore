@@ -1,3 +1,4 @@
 ^arrow-extendr\.Rproj$
 ^\.Rproj\.user$
 ^src/\.cargo$
+^README\.Rmd$
