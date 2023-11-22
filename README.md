@@ -6,7 +6,9 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of arrowextendr is to …
+The goal of arrow-extendr is to provide a Rust crate that integrates
+arrow-rs types with extendr and the `{arrow}` R package. It is based on
+the arrow-rs pyarrow feature.
 
 ## Installation
 
