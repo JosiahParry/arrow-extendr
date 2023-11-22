@@ -1,4 +1,4 @@
-use arrow::array::Float64Array;
+use arrow::array::{Float64Array, ArrayData};
 
 
 use extendr_api::{prelude::*};
@@ -100,14 +100,28 @@ use from::FromArrowRobj;
 /// @export
 fn test_from_field(field: Robj) {
     let f = Field::from_arrow_robj(&field);
-    rprintln!("{:?}", f);
+    rprintln!("{:#?}", f);
 }
 
 #[extendr]
 /// @export
 fn test_from_datatype(field: Robj) {
     let f = DataType::from_arrow_robj(&field);
-    rprintln!("{:?}", f);
+    rprintln!("{:#?}", f);
+}
+
+#[extendr]
+/// @export
+fn test_from_schema(field: Robj) {
+    let f = Schema::from_arrow_robj(&field);
+    rprintln!("{:#?}", f);
+}
+
+#[extendr]
+/// @export
+fn test_from_array(field: Robj) {
+    let f = ArrayData::from_arrow_robj(&field);
+    rprintln!("{:#?}", f);
 }
 // Macro to generate exports.
 // This ensures exported functions are registered with R.
@@ -125,4 +139,6 @@ extendr_module! {
     // FromArrowRobj impls
     fn test_from_field;
     fn test_from_datatype;
+    fn test_from_schema;
+    fn test_from_array;
 }
