@@ -7,6 +7,8 @@ use arrow::array::Int32Array;
 
 pub mod to;
 use to::ToArrowRobj;
+
+pub mod from;
 // Find nanoarrow
 #[extendr]
 /// @export
@@ -89,6 +91,24 @@ fn test_datatype() -> Result<Robj> {
     let dt = DataType::Timestamp(TimeUnit::Second, None);
     dt.to_arrow_robj()
 }
+
+
+// From testing
+use from::FromArrowRobj;
+
+#[extendr]
+/// @export
+fn test_from_field(field: Robj) {
+    let f = Field::from_arrow_robj(&field);
+    rprintln!("{:?}", f);
+}
+
+#[extendr]
+/// @export
+fn test_from_datatype(field: Robj) {
+    let f = DataType::from_arrow_robj(&field);
+    rprintln!("{:?}", f);
+}
 // Macro to generate exports.
 // This ensures exported functions are registered with R.
 // See corresponding C code in `entrypoint.c`.
@@ -101,4 +121,8 @@ extendr_module! {
     fn test_record_batch;
     fn test_schema;
     fn test_datatype;
+
+    // FromArrowRobj impls
+    fn test_from_field;
+    fn test_from_datatype;
 }

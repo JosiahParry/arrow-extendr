@@ -122,4 +122,3 @@ impl ToArrowRobj for DataType {
 
     }
 }
-// arrow:::DataType$import_from_c()
