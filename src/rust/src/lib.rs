@@ -1,14 +1,10 @@
-use arrow::array::Array;
-use arrow::array::PrimitiveArray;
-use arrow::datatypes::ArrowPrimitiveType;
+use arrow::array::Float64Array;
 use extendr_api::{prelude::*};
-
-use arrow::ffi_stream::ArrowArrayStreamReader;
-use arrow::ffi_stream::FFI_ArrowArrayStream;
-use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema, to_ffi};
 
 use arrow::array::Int32Array;
 
+pub mod to;
+use to::ToArrowRobj;
 // Find nanoarrow
 #[extendr]
 /// @export
@@ -30,73 +26,35 @@ fn find_narrow() {
 
 #[extendr]
 /// @export
-fn export_array() -> Robj {
-    let array = Int32Array::from(vec![Some(1), None, Some(3)]);
-    let data = array.into_data();
-    let (ffi_array, ffi_schema) = to_ffi(&data)
-        .expect("success converting arrow data");
-
-    let ffi_array_ptr = &ffi_array as *const FFI_ArrowArray as usize;
-    let arry_addr_chr = ffi_array_ptr.to_string();
-
-    let ffi_scehma_ptr = &ffi_schema as *const FFI_ArrowSchema as usize;
-    let schema_addr_chr = ffi_scehma_ptr.to_string();
-
-    let import_from_c = R!("arrow::Array$import_from_c")
-        .unwrap()
-        .as_function()
-        .unwrap();
-
-    let res = import_from_c.call(pairlist!(arry_addr_chr, schema_addr_chr));
-
-    res.unwrap()
-}
-
-
-#[extendr]
-/// @export
-fn toarrow_trait() -> Result<Robj> {
+fn test_i32() -> Result<Robj> {
     let array = Int32Array::from(vec![Some(1), None, Some(3)]);
     array.to_arrow_robj()
 }
 
-pub trait ToArrowRobj {
-    fn to_arrow_robj(&self) -> Result<Robj>;
+#[extendr]
+/// @export
+fn test_f64() -> Result<Robj> {
+    let array = Float64Array::from(vec![Some(1.0), None, Some(3.0)]);
+    array.to_arrow_robj()
 }
 
-impl<T: ArrowPrimitiveType> ToArrowRobj for PrimitiveArray<T> {
-    fn to_arrow_robj(&self) -> Result<Robj> {
-        let data = self.into_data();
+use arrow::datatypes::Field;
+use arrow::datatypes::DataType;
 
-        // take array data and prepare for FFI 
-        let (ffi_array, ffi_schema) = to_ffi(&data)
-            .expect("success converting arrow data");
-
-        // function from {arrow} R package to import an arrow array
-        let import_from_c = R!("arrow::Array$import_from_c")
-            .unwrap()
-            .as_function()
-            .unwrap();
-
-        // extract array pointer. we need it as a string to be used by arrow R package
-        let ffi_array_ptr = &ffi_array as *const FFI_ArrowArray as usize;
-        let arry_addr_chr = ffi_array_ptr.to_string();
-
-        // same deal but with the schema 
-        let ffi_scehma_ptr = &ffi_schema as *const FFI_ArrowSchema as usize;
-        let schema_addr_chr = ffi_scehma_ptr.to_string();
-
-        // run it! 
-        import_from_c.call(pairlist!(arry_addr_chr, schema_addr_chr))
-    }
+#[extendr]
+/// @export
+// https://github.com/apache/arrow-rs/blob/200e8c80084442d9579e00967e407cd83191565d/arrow/src/pyarrow.rs#L201
+fn test_field() -> Result<Robj> {
+    let f = Field::new("field_name", DataType::Binary, true);
+    f.to_arrow_robj()
 }
-
 // Macro to generate exports.
 // This ensures exported functions are registered with R.
 // See corresponding C code in `entrypoint.c`.
 extendr_module! {
     mod arrowextendr;
     fn find_narrow;
-    fn export_array;
-    fn toarrow_trait;
+    fn test_i32;
+    fn test_f64;
+    fn test_field;
 }
