@@ -1,9 +1,11 @@
 use extendr_api::prelude::*;
 use arrow::{
     array::{PrimitiveArray, Array},
-    datatypes::ArrowPrimitiveType,
-    ffi::{to_ffi, FFI_ArrowArray, FFI_ArrowSchema}
+    datatypes::{ArrowPrimitiveType, Field},
+    ffi::{to_ffi, FFI_ArrowArray, FFI_ArrowSchema}, 
+    record_batch::RecordBatch
 };
+
 
 pub trait ToArrowRobj {
     fn to_arrow_robj(&self) -> Result<Robj>;
@@ -52,11 +54,47 @@ impl ToArrowRobj for Field {
     }
 }
 
-use arrow::datatypes::Field;
+use arrow::ffi_stream::FFI_ArrowArrayStream;
+use arrow::record_batch::RecordBatchIterator;
+use arrow::record_batch::RecordBatchReader;
+
+impl ToArrowRobj for RecordBatch {
+    fn to_arrow_robj(&self) -> Result<Robj> {
+        let reader = RecordBatchIterator::new(vec![Ok(self.clone())], self.schema().clone());
+        let reader: Box<dyn RecordBatchReader + Send> = Box::new(reader);
+        let mut stream = FFI_ArrowArrayStream::new(reader);
+        let stream_ptr = (&mut stream) as *mut FFI_ArrowArrayStream as usize;
+
+        // we create the reader here
+        let import_from_c = R!("arrow::RecordBatchReader$import_from_c")
+            .unwrap()
+            .as_function()
+            .unwrap();
+
+        // the resultant object needs to call the `read_next_batch()` method
+        let res = import_from_c.call(pairlist!(stream_ptr.to_string()))
+            .expect("successful creation of RecordBatchReader");
+
+        res.dollar("read_next_batch")
+            .expect("read_next_batch() method to be found")
+            .call(pairlist!())
+
+    }
+}
+
+
+// RECORD BATCH
+// RecordBatch is converted into RecordBatchIterator
+// Which is boxed and 
+
+// Record batch impl
+// https://github.com/apache/arrow-rs/blob/200e8c80084442d9579e00967e407cd83191565d/arrow/src/pyarrow.rs#L376C1-L377C4
+// Impl for Box<dyn RecordBatchReader + Send>
+// https://github.com/apache/arrow-rs/blob/200e8c80084442d9579e00967e407cd83191565d/arrow/src/pyarrow.rs#L426
+// we'll have to recordbatchread$import_from_c which takes a stream
 
 
 // TODO 
-// arrow::Field$import_from_c()
 // arrow::RecordBatch$import_from_c()
 // arrow::Schema$import_from_c()
 // arrow:::DataType$import_from_c()

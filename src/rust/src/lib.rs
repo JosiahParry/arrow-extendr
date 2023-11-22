@@ -1,4 +1,5 @@
 use arrow::array::Float64Array;
+use arrow::ffi::to_ffi;
 use extendr_api::{prelude::*};
 
 use arrow::array::Int32Array;
@@ -48,6 +49,28 @@ fn test_field() -> Result<Robj> {
     let f = Field::new("field_name", DataType::Binary, true);
     f.to_arrow_robj()
 }
+
+
+use arrow::{datatypes::Schema, record_batch::RecordBatch};
+use std::sync::Arc;
+
+use arrow::array::Array;
+#[extendr]
+/// @export
+fn test_record_batch() -> Result<Robj>{
+    let id_array = Int32Array::from(vec![1, 2, 3, 4, 5]);
+    let schema = Schema::new(vec![
+        Field::new("id", DataType::Int32, false)
+    ]);
+
+    let batch = RecordBatch::try_new(
+        Arc::new(schema),
+        vec![Arc::new(id_array)]
+    ).unwrap();
+
+    batch.to_arrow_robj()
+}
+
 // Macro to generate exports.
 // This ensures exported functions are registered with R.
 // See corresponding C code in `entrypoint.c`.
@@ -57,4 +80,5 @@ extendr_module! {
     fn test_i32;
     fn test_f64;
     fn test_field;
+    fn test_record_batch;
 }
