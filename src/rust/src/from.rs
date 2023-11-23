@@ -34,6 +34,7 @@ pub fn nanoarrow_export(source: &Robj, dest: String) -> Result<Robj, Error> {
 impl FromArrowRobj for Field {
     fn from_arrow_robj(robj: &Robj) -> Result<Self, ErrArrowRobj> {
 
+        // handle nanoarrow 
         if robj.inherits("nanoarrow_schema") {
             let c_schema = FFI_ArrowSchema::empty();
             let c_schema_ptr = &c_schema as *const FFI_ArrowSchema as usize;
@@ -43,13 +44,12 @@ impl FromArrowRobj for Field {
             let field = Field::try_from(&c_schema)?;
 
             return Ok(field);
-
         }
 
         let is_field = robj.inherits("Field");
 
         if !(is_field) {
-            return Err(ErrArrowRobj::ParseError("did not find a `Field`".into()))
+            return Err(ErrArrowRobj::ParseError("did not find a `Field` or `nanoarrow_schema`".into()))
         }
 
         let export_to_c = robj
@@ -71,10 +71,22 @@ impl FromArrowRobj for Field {
 impl FromArrowRobj for DataType {
     fn from_arrow_robj(robj: &Robj) -> Result<Self, ErrArrowRobj> {
 
+
+        if robj.inherits("nanoarrow_schema") {
+            let c_schema = FFI_ArrowSchema::empty();
+            let c_schema_ptr = &c_schema as *const FFI_ArrowSchema as usize;
+
+            let _ = nanoarrow_export(robj, c_schema_ptr.to_string());
+
+            let field = DataType::try_from(&c_schema)?;
+
+            return Ok(field);
+        }
+
         let is_datatype = robj.inherits("DataType");
 
         if !(is_datatype) {
-            return Err(ErrArrowRobj::ParseError("did not find a `DataType`".into()))
+            return Err(ErrArrowRobj::ParseError("did not find a `DataType` or `nanoarrow_schema`".into()))
         }
 
         let export_to_c = robj
@@ -95,10 +107,23 @@ impl FromArrowRobj for DataType {
 
 impl FromArrowRobj for Schema {
     fn from_arrow_robj(robj: &Robj) -> Result<Self, ErrArrowRobj> {
+
+
+        if robj.inherits("nanoarrow_schema") {
+            let c_schema = FFI_ArrowSchema::empty();
+            let c_schema_ptr = &c_schema as *const FFI_ArrowSchema as usize;
+
+            let _ = nanoarrow_export(robj, c_schema_ptr.to_string());
+
+            let field = Schema::try_from(&c_schema)?;
+
+            return Ok(field);
+        }
+
         let is_schema = robj.inherits("Schema");
 
         if !(is_schema) {
-            return Err(ErrArrowRobj::ParseError("did not find a `Schema`".into()))
+            return Err(ErrArrowRobj::ParseError("did not find a `Schema` or `nanoarrow_schema`".into()))
         }
 
         let export_to_c = robj
