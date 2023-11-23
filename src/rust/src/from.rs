@@ -146,6 +146,26 @@ impl FromArrowRobj for Schema {
 impl FromArrowRobj for ArrayData {
     fn from_arrow_robj(robj: &Robj) -> Result<Self, ErrArrowRobj> {
 
+        if robj.inherits("nanoarrow_array") {
+            let array = FFI_ArrowArray::empty();
+            let schema = FFI_ArrowSchema::empty();
+    
+            let c_array_ptr = &array as *const FFI_ArrowArray as usize;
+            let c_schema_ptr = &schema as *const FFI_ArrowSchema as usize;
+
+            let robj_schema = R!("nanoarrow::infer_nanoarrow_schema")
+                .unwrap()
+                .as_function()
+                .unwrap()
+                .call(pairlist!(robj))
+                .expect("unable to infer nanoarrow schema");
+        
+            let _ = nanoarrow_export(robj, c_array_ptr.to_string());
+            let _ = nanoarrow_export(&robj_schema, c_schema_ptr.to_string());
+
+            return ffi::from_ffi(array, &schema);
+        }
+
         let is_array = robj.inherits("Array");
 
         if !is_array {
@@ -165,9 +185,6 @@ impl FromArrowRobj for ArrayData {
             .as_function()
             .unwrap();
 
-        // make the conversion through PyArrow's private API
-        // this changes the pointer's memory and is thus unsafe.
-        // In particular, `_export_to_c` can go out of bounds
         let _ = export_to_c.call(
             pairlist!(
                 c_array_ptr.to_string(),
