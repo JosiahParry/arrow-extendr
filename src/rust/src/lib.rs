@@ -123,6 +123,13 @@ fn test_from_array(field: Robj) {
     let f = ArrayData::from_arrow_robj(&field);
     rprintln!("{:#?}", f);
 }
+
+#[extendr]
+/// @export
+fn test_from_recordbatch(rb: Robj) {
+    let _ = RecordBatch::from_arrow_robj(&rb);
+
+}
 // Macro to generate exports.
 // This ensures exported functions are registered with R.
 // See corresponding C code in `entrypoint.c`.
@@ -141,4 +148,5 @@ extendr_module! {
     fn test_from_datatype;
     fn test_from_schema;
     fn test_from_array;
+    fn test_from_recordbatch;
 }
