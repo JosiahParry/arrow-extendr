@@ -1,3 +1,28 @@
+//! Convert arrow-rs structs into an `Robj`
+//! 
+//! The traits `ToArrowRobj` and `IntoArrowRobj` provide the methods
+//! `to_arrow_robj()` and `into_arrow_robj()` respectively. The former
+//! takes a reference to self whereas the latter consumes self. 
+//! 
+//! Prefer `to_arrow_robj()` for all structs except `ArrowArrayStreamReader`.
+//! 
+//! ```ignore
+//! fn array_to_robj() -> Result<Robj> {
+//!     let array = Int32Array::from(vec![Some(1), None, Some(3)]);
+//!     array.to_arrow_robj()
+//! }
+//! ```
+//! 
+//! |      arrow-rs struct     |         R object        |
+//! | -------------------------| ----------------------- |
+//! | `ArrayData`              |`nanoarrow_array`        |
+//! | `PrimitiveArray<T>`      |`nanoarrow_array`        |
+//! | `Field`                  |`nanoarrow_schema`       |
+//! | `DataType`               |`nanoarrow_schema`       |
+//! | `Schema`                 |`nanoarrow_schema`       |
+//! | `RecordBatch`            |`nanoarrow_array_stream` |
+//! | `ArrowArrayStreamReader` |`nanoarrow_array_stream` |
+//! 
 use extendr_api::prelude::*;
 use arrow::{
     array::{PrimitiveArray, Array, ArrayData},
@@ -7,8 +32,9 @@ use arrow::{
     record_batch::{RecordBatch, RecordBatchReader, RecordBatchIterator}
 };
 
-
-// Helper functions for calling nanoarrow functions
+/// Calls `nanoarrow::nanoarrow_allocate_array()`
+/// 
+/// Requires `{nanoarrow}` to be installed.
 pub fn allocate_array(args: Pairlist) -> Result<Robj> {
     R!("nanoarrow::nanoarrow_allocate_array")
         .expect("`nanoarrow` must be installed")
@@ -18,6 +44,8 @@ pub fn allocate_array(args: Pairlist) -> Result<Robj> {
 }
 
 /// Calls `nanoarrow::nanoarrow_allocate_array_stream()`
+/// 
+/// Requires `{nanoarrow}` to be installed.
 pub fn allocate_array_stream(args: Pairlist) -> Result<Robj> {
     R!("nanoarrow::nanoarrow_allocate_array_stream")
     .expect("`nanoarrow` must be installed")
@@ -26,6 +54,10 @@ pub fn allocate_array_stream(args: Pairlist) -> Result<Robj> {
     .call(args)
 }
 
+
+/// Calls `nanoarrow::nanoarrow_allocate_schema()`
+/// 
+/// Requires `{nanoarrow}` to be installed.
 pub fn allocate_schema(args: Pairlist) -> Result<Robj>  {
     R!("nanoarrow::nanoarrow_allocate_schema")
         .expect("`nanoarrow` must be installed")
@@ -34,6 +66,10 @@ pub fn allocate_schema(args: Pairlist) -> Result<Robj>  {
         .call(args)
 }
 
+
+/// Calls `nanoarrow::nanoarrow_pointer_move()`
+/// 
+/// Requires `{nanoarrow}` to be installed.
 pub fn move_pointer(args: Pairlist) -> Result<Robj> {
     R!("nanoarrow::nanoarrow_pointer_move")
         .expect("`nanoarrow` must be installed")
@@ -42,6 +78,9 @@ pub fn move_pointer(args: Pairlist) -> Result<Robj> {
         .call(args)
 }
 
+/// Calls `nanoarrow::nanoarrow_array_set_schema()` 
+/// 
+/// Requires `{nanoarrow}` to be installed.
 pub fn set_array_schema(arr: &Robj, schema: &Robj) {
     let _ = R!("nanoarrow::nanoarrow_array_set_schema")
         .expect("`nanoarrow` must be installed")
@@ -50,7 +89,12 @@ pub fn set_array_schema(arr: &Robj, schema: &Robj) {
         .call(pairlist!(arr, schema));
 }
 
-/// Convert an Arrow struct to an `Robj`
+/// Convert an Arrow struct to an `Robj` 
+/// 
+/// Does not consume `self`. Takes an arrow-rs struct and converts it into
+/// a `{nanoarrow}` S3 object of class `nanoarrow_array`, `nanoarrow_array_stream`, or `nanoarrow_schema`.
+/// 
+/// **Requires `nanoarrow` to be available**.
 pub trait ToArrowRobj {
     fn to_arrow_robj(&self) -> Result<Robj>;
 }
@@ -113,6 +157,7 @@ impl ToArrowRobj for Schema {
         let ffi_schema = FFI_ArrowSchema::try_from(self)
             .expect("valid Schema");
 
+        // allocate and get pntr address
         let ffi_schema_ptr = &ffi_schema as *const FFI_ArrowSchema as usize;
         let schema_addr_chr = ffi_schema_ptr.to_string();
 
@@ -145,7 +190,6 @@ impl ToArrowRobj for DataType {
     }
 }
 
-/// Convert a RecordBatch into a `nanoarrow_array_stream` R object
 impl ToArrowRobj for RecordBatch {
     fn to_arrow_robj(&self) -> Result<Robj> {
         let reader = RecordBatchIterator::new(vec![Ok(self.clone())], self.schema().clone());
@@ -160,7 +204,12 @@ impl ToArrowRobj for RecordBatch {
     }
 }
 
-
+/// Convert an Arrow struct to an `Robj` 
+/// 
+/// Consumes `self`. Takes an arrow-rs struct and converts it into
+/// a `{nanoarrow}` S3 object of class `nanoarrow_array`, `nanoarrow_array_stream`, or `nanoarrow_schema`.
+/// 
+/// **Requires `nanoarrow` to be available**.
 pub trait IntoArrowRobj {
     fn into_arrow_robj(self) -> Result<Robj>;
 }

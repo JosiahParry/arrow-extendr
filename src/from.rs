@@ -1,18 +1,53 @@
-use arrow::{datatypes::{Field, DataType, Schema}, ffi::{FFI_ArrowArray, FFI_ArrowSchema, self}, array::{ArrayData, make_array}, record_batch::{RecordBatch}, ffi_stream::{self, ArrowArrayStreamReader, FFI_ArrowArrayStream}};
-use extendr_api::prelude::*;
+//! Convert arrow-rs objects to an `Robj`
+//! 
+//! ```ignore
+//! fn array_from_r(field: Robj) -> Result<ArrayData> {
+//!     ArrayData::from_arrow_robj(&field)?
+//! }
+//! ```
+//! 
+//! `Robj`s from `{nanoarrow}` and `{arrow}` are both supported. 
+//! 
+//! | arrow-rs struct          |             R object                            |
+//! | -------------------------| ----------------------------------------------- |
+//! | `Field`                  |`nanoarrow_schema` or `arrow::Field`             |
+//! | `Schema`                 |`nanoarrow_schema` or `arrow::Schema`            |
+//! | `DataType`               |`nanoarrow_schema` or `arrow::DataType`          |
+//! | `ArrayData`              |`nanoarrow_array` or `arrow::Array`              |
+//! | `RecordBatch`            |`nanoarrow_array_stream` or `arrow::RecordBatch` |
+//! | `ArrowArrayStreamReader` |`nanoarrow_array_stream`                         |
+//! 
+//! ### Notes
+//! 
+//! In the case of creating a `RecordBatch` from a `nanoarrow_array_stream` only 
+//! the first chunk is returned. If you expect more than one chunk, use `ArrowArrayStreamReader`.
+//! 
 
+use arrow::{
+    datatypes::{Field, DataType, Schema}, 
+    error::ArrowError,
+    ffi::{FFI_ArrowArray, FFI_ArrowSchema, self}, 
+    array::{ArrayData, make_array}, 
+    record_batch::RecordBatch, 
+    ffi_stream::{self, ArrowArrayStreamReader, FFI_ArrowArrayStream}
+};
+
+use extendr_api::prelude::*;
 use std::result::Result;
+
+/// Creates arrow-rs Structs from an Robj
+/// 
+
 pub trait FromArrowRobj: Sized {
     fn from_arrow_robj(robj: &Robj) -> Result<Self, ErrArrowRobj>;
 }
 
-//https://github.com/apache/arrow-rs/blob/200e8c80084442d9579e00967e407cd83191565d/arrow/src/pyarrow.rs#L176
-
-use arrow::error::ArrowError;
 pub type ErrArrowRobj = ArrowError;
 
-
+/// Calls `nanoarrow::nanoarrow_pointer_addr_chr()`
+/// 
 /// Gets the address of a nanoarrow object as a string `Robj`
+/// Requires `{nanoarrow}` to be installed.
 pub fn nanoarrow_addr(robj: &Robj) -> Result<Robj, Error> {
     R!("nanoarrow::nanoarrow_pointer_addr_chr")
         .expect("`nanoarrow` must be installed")
@@ -21,7 +56,10 @@ pub fn nanoarrow_addr(robj: &Robj) -> Result<Robj, Error> {
         .call(pairlist!(robj))
 }
 
-
+/// Calls `nanoarrow::nanoarrow_pointer_export()`
+/// 
+/// Exports a nanoarrow pointer from R to C
+/// Requires `{nanoarrow}` to be installed.
 pub fn nanoarrow_export(source: &Robj, dest: String) -> Result<Robj, Error> {
     R!("nanoarrow::nanoarrow_pointer_export")
         .expect("`nanoarrow` must be installed")
@@ -261,9 +299,7 @@ impl FromArrowRobj for RecordBatch {
 
 impl FromArrowRobj for ArrowArrayStreamReader {
     fn from_arrow_robj(robj: &Robj) -> Result<Self, ErrArrowRobj> {
-
         // TODO arrow::RecordBatchStreamWriter
-
         if !robj.inherits("nanoarrow_array_stream") {
             return Err(ErrArrowRobj::ParseError("did not find `nanoarrow_array_stream`".into()))
         }

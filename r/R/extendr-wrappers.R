@@ -47,5 +47,8 @@ test_from_array <- function(field) invisible(.Call(wrap__test_from_array, field)
 #' @export
 test_from_recordbatch <- function(rb) invisible(.Call(wrap__test_from_recordbatch, rb))
 
+#' @export
+test_from_array_steam_reader <- function(rb) invisible(.Call(wrap__test_from_array_steam_reader, rb))
+
 
 # nolint end
