@@ -259,3 +259,18 @@ impl FromArrowRobj for RecordBatch {
 }
 
 
+impl FromArrowRobj for ArrowArrayStreamReader {
+    fn from_arrow_robj(robj: &Robj) -> Result<Self, ErrArrowRobj> {
+
+        if !robj.inherits("nanoarrow_array_stream") {
+            return Err(ErrArrowRobj::ParseError("did not find `nanoarrow_array_stream`".into()))
+        }
+        // we need to allocate an empty schema and fetch it from the record batch
+        let stream = ffi_stream::FFI_ArrowArrayStream::empty();
+        let c_stream_ptr = &stream as *const FFI_ArrowArrayStream as usize;
+
+        let _ = nanoarrow_export(robj, c_stream_ptr.to_string());
+    
+        ArrowArrayStreamReader::try_new(stream)
+    }
+}

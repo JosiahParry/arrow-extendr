@@ -1,6 +1,7 @@
 use arrow::array::{Float64Array, ArrayData};
 
 
+use arrow::ffi_stream::ArrowArrayStreamReader;
 use extendr_api::{prelude::*};
 
 use arrow::array::Int32Array;
@@ -132,6 +133,14 @@ fn test_from_recordbatch(rb: Robj) {
     rprintln!("{:#?}", rb);
 
 }
+
+#[extendr]
+/// @export
+fn test_from_array_steam_reader(rb: Robj) {
+    let rb = ArrowArrayStreamReader::from_arrow_robj(&rb).unwrap();
+    rprintln!("{:#?}", rb);
+
+}
 // Macro to generate exports.
 // This ensures exported functions are registered with R.
 // See corresponding C code in `entrypoint.c`.
@@ -151,4 +160,5 @@ extendr_module! {
     fn test_from_schema;
     fn test_from_array;
     fn test_from_recordbatch;
+    fn test_from_array_steam_reader;
 }
