@@ -154,7 +154,6 @@ impl FromArrowRobj for RecordBatch {
         );
 
         let res = ffi::from_ffi(array, &schema)?;
-
         let schema = Schema::try_from(&schema)?;
         
         let res_arrays = res.child_data().into_iter()

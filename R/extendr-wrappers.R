@@ -26,5 +26,26 @@ test_field <- function() .Call(wrap__test_field)
 #' @export
 test_record_batch <- function() .Call(wrap__test_record_batch)
 
+#' @export
+test_schema <- function() .Call(wrap__test_schema)
+
+#' @export
+test_datatype <- function() .Call(wrap__test_datatype)
+
+#' @export
+test_from_field <- function(field) invisible(.Call(wrap__test_from_field, field))
+
+#' @export
+test_from_datatype <- function(field) invisible(.Call(wrap__test_from_datatype, field))
+
+#' @export
+test_from_schema <- function(field) invisible(.Call(wrap__test_from_schema, field))
+
+#' @export
+test_from_array <- function(field) invisible(.Call(wrap__test_from_array, field))
+
+#' @export
+test_from_recordbatch <- function(rb) invisible(.Call(wrap__test_from_recordbatch, rb))
+
 
 # nolint end

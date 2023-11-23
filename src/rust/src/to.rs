@@ -8,29 +8,29 @@ use arrow::{
 };
 
 
-pub trait ToArrowRobj {
-    fn to_arrow_robj(&self) -> Result<Robj>;
-}
-
-fn allocate_array() -> Function {
+// Helper functions for calling nanoarrow functions
+fn allocate_array(args: Pairlist) -> Result<Robj> {
     R!("nanoarrow::nanoarrow_allocate_array")
         .expect("`nanoarrow` must be installed")
         .as_function()
         .expect("`nanoarrow_allocate_array()` must be available")
+        .call(args)
 }
 
-fn allocate_schema() -> Function {
+fn allocate_schema(args: Pairlist) -> Result<Robj>  {
     R!("nanoarrow::nanoarrow_allocate_schema")
         .expect("`nanoarrow` must be installed")
         .as_function()
         .expect("`nanoarrow_allocate_schema()` must be available")
+        .call(args)
 }
 
-fn move_pointer() -> Function {
+fn move_pointer(args: Pairlist) -> Result<Robj> {
     R!("nanoarrow::nanoarrow_pointer_move")
         .expect("`nanoarrow` must be installed")
         .as_function()
         .expect("`nanoarrow_pointer_move()` must be available")
+        .call(args)
 }
 
 fn set_array_schema(arr: &Robj, schema: &Robj) {
@@ -39,6 +39,11 @@ fn set_array_schema(arr: &Robj, schema: &Robj) {
         .as_function()
         .expect("`nanoarrow_array_set_schema()` must be available")
         .call(pairlist!(arr, schema));
+}
+
+/// Convert an Arrow struct to an `Robj`
+pub trait ToArrowRobj {
+    fn to_arrow_robj(&self) -> Result<Robj>;
 }
 
 impl ToArrowRobj for ArrayData {
@@ -56,12 +61,12 @@ impl ToArrowRobj for ArrayData {
         let schema_addr_chr = ffi_schema_ptr.to_string();
 
         // allocate empty array and schema
-        let arr_to_fill = allocate_array().call(pairlist!())?;
-        let schema_to_fill = allocate_schema().call(pairlist!())?;
+        let arr_to_fill = allocate_array(pairlist!())?;
+        let schema_to_fill = allocate_schema(pairlist!())?;
 
         // move pointers
-        let _ = move_pointer().call(pairlist!(arry_addr_chr, &arr_to_fill));
-        let _ = move_pointer().call(pairlist!(schema_addr_chr, &schema_to_fill));
+        let _ = move_pointer(pairlist!(arry_addr_chr, &arr_to_fill));
+        let _ = move_pointer(pairlist!(schema_addr_chr, &schema_to_fill));
 
         set_array_schema(&arr_to_fill, &schema_to_fill);
 
@@ -83,11 +88,50 @@ impl ToArrowRobj for Field {
         let schema_addr_chr = ffi_schema_ptr.to_string();
 
         // allocate the schema
-        let schema_to_fill = allocate_schema().call(pairlist!())?;
+        let schema_to_fill = allocate_schema(pairlist!())?;
 
         // fill the schema with the FFI_ArrowSchema
-        let _ = move_pointer().call(pairlist!(schema_addr_chr, &schema_to_fill));
+        let _ = move_pointer(pairlist!(schema_addr_chr, &schema_to_fill));
 
+        Ok(schema_to_fill)
+    }
+}
+
+
+impl ToArrowRobj for Schema {
+    fn to_arrow_robj(&self) -> Result<Robj> {
+
+        let ffi_schema = FFI_ArrowSchema::try_from(self)
+            .expect("valid Schema");
+
+        let ffi_schema_ptr = &ffi_schema as *const FFI_ArrowSchema as usize;
+        let schema_addr_chr = ffi_schema_ptr.to_string();
+
+        // allocate the schema
+        let schema_to_fill = allocate_schema(pairlist!())?;
+
+        // fill the schema with the FFI_ArrowSchema
+        let _ = move_pointer(pairlist!(schema_addr_chr, &schema_to_fill));
+        
+        Ok(schema_to_fill)
+    }
+}
+
+impl ToArrowRobj for DataType {
+    fn to_arrow_robj(&self) -> Result<Robj> {
+
+        let ffi_schema = FFI_ArrowSchema::try_from(self)
+            .expect("valid Schema");
+
+        let ffi_schema_ptr = &ffi_schema as *const FFI_ArrowSchema as usize;
+        let schema_addr_chr = ffi_schema_ptr.to_string();
+        
+        // allocate the schema
+        let schema_to_fill = allocate_schema(pairlist!())?;
+
+        // fill the schema with the FFI_ArrowSchema
+        let _ = move_pointer(pairlist!(schema_addr_chr, &schema_to_fill));
+        
         Ok(schema_to_fill)
     }
 }
@@ -120,42 +164,5 @@ impl ToArrowRobj for RecordBatch {
         res.dollar("read_next_batch")
             .expect("`read_next_batch()` method to be found")
             .call(pairlist!())
-    }
-}
-
-impl ToArrowRobj for Schema {
-    fn to_arrow_robj(&self) -> Result<Robj> {
-        // Import function from R
-        let import_from_c = R!("arrow::Schema$import_from_c")
-            .unwrap()
-            .as_function()
-            .unwrap();
-
-        let ffi_schema = FFI_ArrowSchema::try_from(self)
-            .expect("valid Schema");
-
-        let ffi_schema_ptr = &ffi_schema as *const FFI_ArrowSchema as usize;
-        let schema_addr_chr = ffi_schema_ptr.to_string();
-        
-        import_from_c.call(pairlist!(schema_addr_chr))
-    }
-}
-
-impl ToArrowRobj for DataType {
-    fn to_arrow_robj(&self) -> Result<Robj> {
-        // Import function from R
-        let import_from_c = R!("arrow:::DataType$import_from_c")
-            .unwrap()
-            .as_function()
-            .unwrap();
-
-        let ffi_schema = FFI_ArrowSchema::try_from(self)
-            .expect("valid Schema");
-
-        let ffi_schema_ptr = &ffi_schema as *const FFI_ArrowSchema as usize;
-        let schema_addr_chr = ffi_schema_ptr.to_string();
-        
-        import_from_c.call(pairlist!(schema_addr_chr))
-
     }
 }
