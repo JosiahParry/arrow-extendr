@@ -262,6 +262,8 @@ impl FromArrowRobj for RecordBatch {
 impl FromArrowRobj for ArrowArrayStreamReader {
     fn from_arrow_robj(robj: &Robj) -> Result<Self, ErrArrowRobj> {
 
+        // TODO arrow::RecordBatchStreamWriter
+
         if !robj.inherits("nanoarrow_array_stream") {
             return Err(ErrArrowRobj::ParseError("did not find `nanoarrow_array_stream`".into()))
         }

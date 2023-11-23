@@ -3,7 +3,7 @@ use arrow::{
     array::{PrimitiveArray, Array, ArrayData},
     datatypes::{ArrowPrimitiveType, DataType, Field, Schema},
     ffi::{to_ffi, FFI_ArrowArray, FFI_ArrowSchema}, 
-    ffi_stream::FFI_ArrowArrayStream,
+    ffi_stream::{FFI_ArrowArrayStream, ArrowArrayStreamReader},
     record_batch::{RecordBatch, RecordBatchReader, RecordBatchIterator}
 };
 
@@ -158,4 +158,25 @@ impl ToArrowRobj for RecordBatch {
 
         Ok(stream_to_fill)
     }
+}
+
+/// Unimplemented 
+impl ToArrowRobj for ArrowArrayStreamReader {
+    fn to_arrow_robj(&self) -> Result<Robj> {
+        todo!()
+    }
+}
+
+
+/// Function that will take an ArrowArrayStreamReader and turn into Robj
+pub fn to_arrow_robj_stream_reader(reader: ArrowArrayStreamReader) -> Result<Robj> {
+    let reader: Box<dyn RecordBatchReader + Send> = Box::new(reader);
+        let mut stream = FFI_ArrowArrayStream::new(reader);
+        let stream_ptr = (&mut stream) as *mut FFI_ArrowArrayStream as usize;
+
+        let stream_to_fill = allocate_array_stream(pairlist!())?;
+        let _ = move_pointer(pairlist!(stream_ptr.to_string(), &stream_to_fill));
+
+        Ok(stream_to_fill)
+
 }
