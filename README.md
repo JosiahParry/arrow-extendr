@@ -1,59 +1,64 @@
+# arrow_extendr
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
+Pass arrow-rs objects to and from an R session
 
-# arrowextendr
+### Motivating Example
 
-<!-- badges: start -->
-<!-- badges: end -->
+Say we have the following `DBI` connection which we will send requests to using arrow.
+The result of `dbGetQueryArrow()` is a `nanoarrow_array_stream`. We want to
+count the number of rows in each batch of the steam using Rust.
 
-The goal of arrow-extendr is to provide a Rust crate that integrates
-arrow-rs types with extendr and the `{arrow}` R package. It is based on
-the arrow-rs pyarrow feature.
+```r
+# adapted from https://github.com/r-dbi/DBI/blob/main/vignettes/DBI-arrow.Rmd
 
-## Installation
+library(DBI)
+con <- dbConnect(RSQLite::SQLite())
+data <- data.frame(
+  a = runif(10000, 0, 10),
+  b = rnorm(10000, 4.5),
+  c = sample(letters, 10000, TRUE)
+)
 
-You can install the development version of arrowextendr from
-[GitHub](https://github.com/) with:
-
-``` r
-# install.packages("devtools")
-devtools::install_github("JosiahParry/arrow-extendr")
+dbWriteTable(con, "tbl", data)
 ```
 
-These R functions illustrate that we can create arrow-rs structs and
-return them to R
+We can write an extendr function which creates an `ArrowArrayStreamReader`
+from an `&Robj`. In the function we instantiate a counter to keep track
+of the number of rows per chunk. For each chunk we print the number of rows.
 
-``` r
-library(arrowextendr)
+```rust
+#[extendr]
+/// @export
+fn process_stream(stream: Robj) -> i32 {
+    let rb = ArrowArrayStreamReader::from_arrow_robj(&stream)
+        .unwrap();
 
-# i32 array
-test_i32()
-#> Array
-#> <int32>
-#> [
-#>   1,
-#>   null,
-#>   3
-#> ]
+    let mut n = 0;
 
-# f64 array
-test_f64()
-#> Array
-#> <double>
-#> [
-#>   1,
-#>   null,
-#>   3
-#> ]
+    rprintln!("Processing `ArrowArrayStreamReader`...");
+    for chunk in rb {
+        let chunk_rows = chunk.unwrap().num_rows();
+        rprintln!("Found {chunk_rows} rows");
+        n += chunk_rows as i32;
+    }
 
-# fields
-test_field()
-#> Field
-#> field_name: binary
+    n
+}
+```
 
-# record batches
-test_record_batch()
-#> RecordBatch
-#> 5 rows x 1 columns
-#> $id <int32 not null>
+With this function we can use it on the output of `dbGetQueryArrow()` or other Arrow
+related DBI functions.
+
+```r
+query <- dbGetQueryArrow(con, "SELECT * FROM tbl WHERE a < 3")
+process_stream(query)
+#> Processing `ArrowArrayStreamReader`...
+#> Found 256 rows
+#> Found 256 rows
+#> Found 256 rows
+#> ... truncated ...
+#> Found 256 rows
+#> Found 256 rows
+#> Found 143 rows
+#> [1] 2959
 ```
