@@ -82,13 +82,13 @@ impl ToArrowRobj for Field {
         let ffi_schema_ptr = &ffi_schema as *const FFI_ArrowSchema as usize;
         let schema_addr_chr = ffi_schema_ptr.to_string();
 
-        // function from {arrow} R package to import an arrow field
-        let import_from_c = R!("arrow::Field$import_from_c")
-            .unwrap()
-            .as_function()
-            .unwrap();
+        // allocate the schema
+        let schema_to_fill = allocate_schema().call(pairlist!())?;
 
-        import_from_c.call(pairlist!(schema_addr_chr))
+        // fill the schema with the FFI_ArrowSchema
+        let _ = move_pointer().call(pairlist!(schema_addr_chr, &schema_to_fill));
+
+        Ok(schema_to_fill)
     }
 }
 
