@@ -113,9 +113,31 @@ fn test_from_recordbatch(rb: Robj) {
 /// @export
 fn test_from_array_steam_reader(rb: Robj) {
     let rb = ArrowArrayStreamReader::from_arrow_robj(&rb).unwrap();
-    rprintln!("{:#?}", rb);
 
+    rprintln!("Processing ArrowArrayStreamReader...");
+    for chunk in rb {
+        rprintln!("Found {} rows", chunk.unwrap().num_rows());
+    }
 }
+
+#[extendr]
+/// @export
+fn process_stream(stream: Robj) -> i32 {
+    let rb = ArrowArrayStreamReader::from_arrow_robj(&stream)
+        .unwrap();
+
+    let mut n = 0;
+
+    rprintln!("Processing `ArrowArrayStreamReader`...");
+    for chunk in rb {
+        let chunk_rows = chunk.unwrap().num_rows();
+        rprintln!("Found {chunk_rows} rows");
+        n += chunk_rows as i32;
+    }
+
+    n 
+}
+
 // Macro to generate exports.
 // This ensures exported functions are registered with R.
 // See corresponding C code in `entrypoint.c`.
@@ -135,4 +157,7 @@ extendr_module! {
     fn test_from_array;
     fn test_from_recordbatch;
     fn test_from_array_steam_reader;
+
+    // 
+    fn process_stream;
 }

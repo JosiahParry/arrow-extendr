@@ -12,9 +12,6 @@
 NULL
 
 #' @export
-find_narrow <- function() invisible(.Call(wrap__find_narrow))
-
-#' @export
 test_i32 <- function() .Call(wrap__test_i32)
 
 #' @export
@@ -49,6 +46,9 @@ test_from_recordbatch <- function(rb) invisible(.Call(wrap__test_from_recordbatc
 
 #' @export
 test_from_array_steam_reader <- function(rb) invisible(.Call(wrap__test_from_array_steam_reader, rb))
+
+#' @export
+process_stream <- function(stream) .Call(wrap__process_stream, stream)
 
 
 # nolint end
