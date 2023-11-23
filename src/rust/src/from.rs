@@ -12,8 +12,39 @@ use arrow::error::ArrowError;
 pub type ErrArrowRobj = ArrowError;
 
 
+/// Gets the address of a nanoarrow object as a string `Robj`
+pub fn nanoarrow_addr(robj: &Robj) -> Result<Robj, Error> {
+    R!("nanoarrow::nanoarrow_pointer_addr_chr")
+        .expect("`nanoarrow` must be installed")
+        .as_function()
+        .expect("`nanoarrow_pointer_addr_ch()` must be available")
+        .call(pairlist!(robj))
+}
+
+
+pub fn nanoarrow_export(source: &Robj, dest: String) -> Result<Robj, Error> {
+    R!("nanoarrow::nanoarrow_pointer_export")
+        .expect("`nanoarrow` must be installed")
+        .as_function()
+        .expect("`nanoarrow_pointer_export()` must be available")
+        .call(pairlist!(source, dest))
+}
+
+
 impl FromArrowRobj for Field {
     fn from_arrow_robj(robj: &Robj) -> Result<Self, ErrArrowRobj> {
+
+        if robj.inherits("nanoarrow_schema") {
+            let c_schema = FFI_ArrowSchema::empty();
+            let c_schema_ptr = &c_schema as *const FFI_ArrowSchema as usize;
+
+            let _ = nanoarrow_export(robj, c_schema_ptr.to_string());
+
+            let field = Field::try_from(&c_schema)?;
+
+            return Ok(field);
+
+        }
 
         let is_field = robj.inherits("Field");
 

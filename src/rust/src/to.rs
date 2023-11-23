@@ -145,14 +145,7 @@ impl ToArrowRobj for DataType {
     }
 }
 
-// RECORD BATCH
-// RecordBatch is converted into RecordBatchIterator
-// Which is boxed and sent as a stream then processes the stream
-// Record batch impl
-// https://github.com/apache/arrow-rs/blob/200e8c80084442d9579e00967e407cd83191565d/arrow/src/pyarrow.rs#L376C1-L377C4
-// Impl for Box<dyn RecordBatchReader + Send>
-// https://github.com/apache/arrow-rs/blob/200e8c80084442d9579e00967e407cd83191565d/arrow/src/pyarrow.rs#L426
-// we'll have to recordbatchread$import_from_c which takes a stream
+/// Convert a RecordBatch into a `nanoarrow_array_stream` R object
 impl ToArrowRobj for RecordBatch {
     fn to_arrow_robj(&self) -> Result<Robj> {
         let reader = RecordBatchIterator::new(vec![Ok(self.clone())], self.schema().clone());
