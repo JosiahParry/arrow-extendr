@@ -1,4 +1,4 @@
-use arrow::{datatypes::{Field, DataType, Schema}, ffi::{FFI_ArrowArray, FFI_ArrowSchema, self}, array::{ArrayData, make_array}, record_batch::RecordBatch};
+use arrow::{datatypes::{Field, DataType, Schema}, ffi::{FFI_ArrowArray, FFI_ArrowSchema, self}, array::{ArrayData, make_array}, record_batch::{RecordBatch}, ffi_stream::{self, ArrowArrayStreamReader, FFI_ArrowArrayStream}};
 use extendr_api::prelude::*;
 
 use std::result::Result;
@@ -196,14 +196,32 @@ impl FromArrowRobj for ArrayData {
     }
 }
 
-
-
+/// If there are more than one RecordBatches in the stream, do not use this
+/// Use ArrowStreamReader instead
 impl FromArrowRobj for RecordBatch {
     fn from_arrow_robj(robj: &Robj) -> Result<Self, ErrArrowRobj> {
+
+        if robj.inherits("nanoarrow_array_stream") {
+            // we need to allocate an empty schema and fetch it from the record batch
+            let stream = ffi_stream::FFI_ArrowArrayStream::empty();
+            let c_stream_ptr = &stream as *const FFI_ArrowArrayStream as usize;
+
+            let _ = nanoarrow_export(robj, c_stream_ptr.to_string());
+        
+            let res = ArrowArrayStreamReader::try_new(stream)?;
+            let r2 = res
+                .into_iter()
+                .map(|xi| xi.unwrap())
+                .nth(0).unwrap();
+
+            return Ok(r2);
+
+        }
+
         let is_rb = robj.inherits("RecordBatch");
 
         if !is_rb {
-            return Err(ErrArrowRobj::ParseError("did not find a `RecordBatch`".into()))
+            return Err(ErrArrowRobj::ParseError("did not find a `RecordBatch` or `nanoarrow_array_stream`".into()))
         }
 
         // we need to allocate an empty schema and fetch it from the record batch
@@ -239,3 +257,5 @@ impl FromArrowRobj for RecordBatch {
 
     }
 }
+
+

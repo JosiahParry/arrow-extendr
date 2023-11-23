@@ -127,7 +127,9 @@ fn test_from_array(field: Robj) {
 #[extendr]
 /// @export
 fn test_from_recordbatch(rb: Robj) {
-    let _ = RecordBatch::from_arrow_robj(&rb);
+    let rb = RecordBatch::from_arrow_robj(&rb).unwrap();
+
+    rprintln!("{:#?}", rb);
 
 }
 // Macro to generate exports.
