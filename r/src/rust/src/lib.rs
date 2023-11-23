@@ -1,5 +1,5 @@
 use arrow::array::{Float64Array, ArrayData};
-
+use arrow::ffi_stream::ArrowArrayStreamReader;
 
 use arrow_extendr::to::*;
 use arrow_extendr::from::*;
@@ -53,7 +53,6 @@ fn test_record_batch() -> Result<Robj>{
     batch.to_arrow_robj()
 }
 
-
 #[extendr]
 /// @export
 fn test_schema() -> Result<Robj> {
@@ -72,10 +71,7 @@ fn test_datatype() -> Result<Robj> {
     dt.to_arrow_robj()
 }
 
-
 // From testing
-use from::FromArrowRobj;
-
 #[extendr]
 /// @export
 fn test_from_field(field: Robj) {

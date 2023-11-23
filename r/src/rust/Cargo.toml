@@ -10,5 +10,5 @@ name = 'arrowextendr'
 
 [dependencies]
 extendr-api = '*'
-arrow_extendr = { path = "../../../../arrow-extendr" }
+arrow_extendr = { path = "/Users/josiahparry/github/arrow-extendr" }
 arrow = '*'
