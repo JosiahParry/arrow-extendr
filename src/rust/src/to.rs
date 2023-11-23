@@ -9,7 +9,7 @@ use arrow::{
 
 
 // Helper functions for calling nanoarrow functions
-fn allocate_array(args: Pairlist) -> Result<Robj> {
+pub fn allocate_array(args: Pairlist) -> Result<Robj> {
     R!("nanoarrow::nanoarrow_allocate_array")
         .expect("`nanoarrow` must be installed")
         .as_function()
@@ -17,7 +17,16 @@ fn allocate_array(args: Pairlist) -> Result<Robj> {
         .call(args)
 }
 
-fn allocate_schema(args: Pairlist) -> Result<Robj>  {
+/// Calls `nanoarrow::nanoarrow_allocate_array_stream()`
+pub fn allocate_array_stream(args: Pairlist) -> Result<Robj> {
+    R!("nanoarrow::nanoarrow_allocate_array_stream")
+    .expect("`nanoarrow` must be installed")
+    .as_function()
+    .expect("`nanoarrow_allocate_array()` must be available")
+    .call(args)
+}
+
+pub fn allocate_schema(args: Pairlist) -> Result<Robj>  {
     R!("nanoarrow::nanoarrow_allocate_schema")
         .expect("`nanoarrow` must be installed")
         .as_function()
@@ -25,7 +34,7 @@ fn allocate_schema(args: Pairlist) -> Result<Robj>  {
         .call(args)
 }
 
-fn move_pointer(args: Pairlist) -> Result<Robj> {
+pub fn move_pointer(args: Pairlist) -> Result<Robj> {
     R!("nanoarrow::nanoarrow_pointer_move")
         .expect("`nanoarrow` must be installed")
         .as_function()
@@ -33,7 +42,7 @@ fn move_pointer(args: Pairlist) -> Result<Robj> {
         .call(args)
 }
 
-fn set_array_schema(arr: &Robj, schema: &Robj) {
+pub fn set_array_schema(arr: &Robj, schema: &Robj) {
     let _ = R!("nanoarrow::nanoarrow_array_set_schema")
         .expect("`nanoarrow` must be installed")
         .as_function()
@@ -151,18 +160,9 @@ impl ToArrowRobj for RecordBatch {
         let mut stream = FFI_ArrowArrayStream::new(reader);
         let stream_ptr = (&mut stream) as *mut FFI_ArrowArrayStream as usize;
 
-        // we create the reader here
-        let import_from_c = R!("arrow::RecordBatchReader$import_from_c")
-            .unwrap()
-            .as_function()
-            .unwrap();
+        let stream_to_fill = allocate_array_stream(pairlist!())?;
+        let _ = move_pointer(pairlist!(stream_ptr.to_string(), &stream_to_fill));
 
-        // the resultant object needs to call the `read_next_batch()` method
-        let res = import_from_c.call(pairlist!(stream_ptr.to_string()))
-            .expect("successful creation of `RecordBatchReader`");
-
-        res.dollar("read_next_batch")
-            .expect("`read_next_batch()` method to be found")
-            .call(pairlist!())
+        Ok(stream_to_fill)
     }
 }
