@@ -160,16 +160,37 @@ impl ToArrowRobj for RecordBatch {
     }
 }
 
-/// Unimplemented 
-impl ToArrowRobj for ArrowArrayStreamReader {
-    fn to_arrow_robj(&self) -> Result<Robj> {
-        todo!()
+
+pub trait IntoArrowRobj {
+    fn into_arrow_robj(self) -> Result<Robj>;
+}
+
+// macro to implement `IntoArrowRobj` for those that have `ToArrowRobj` implemented
+macro_rules! impl_into_arrow {
+    ($t:ident) => {
+        impl IntoArrowRobj for $t {
+            fn into_arrow_robj(self) -> Result<Robj> {
+                self.to_arrow_robj()
+            }
+        }
     }
 }
 
+impl_into_arrow!(ArrayData);
+impl_into_arrow!(Field);
+impl_into_arrow!(Schema);
+impl_into_arrow!(DataType);
+impl_into_arrow!(RecordBatch);
+
+// macro doesn't permit generics
+impl<T: ArrowPrimitiveType> IntoArrowRobj for PrimitiveArray<T> {
+    fn into_arrow_robj(self) -> Result<Robj> {
+        self.to_arrow_robj()
+    }
+}
 
 /// Function that will take an ArrowArrayStreamReader and turn into Robj
-pub fn to_arrow_robj_stream_reader(reader: ArrowArrayStreamReader) -> Result<Robj> {
+fn to_arrow_robj_stream_reader(reader: ArrowArrayStreamReader) -> Result<Robj> {
     let reader: Box<dyn RecordBatchReader + Send> = Box::new(reader);
         let mut stream = FFI_ArrowArrayStream::new(reader);
         let stream_ptr = (&mut stream) as *mut FFI_ArrowArrayStream as usize;
@@ -179,4 +200,10 @@ pub fn to_arrow_robj_stream_reader(reader: ArrowArrayStreamReader) -> Result<Rob
 
         Ok(stream_to_fill)
 
+}
+
+impl IntoArrowRobj for ArrowArrayStreamReader {
+    fn into_arrow_robj(self) -> Result<Robj> {
+        to_arrow_robj_stream_reader(self)
+    }
 }
