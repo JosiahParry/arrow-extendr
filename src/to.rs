@@ -288,3 +288,16 @@ impl IntoArrowRobj for Vec<RecordBatch> {
         reader.into_arrow_robj()
     }
 }
+
+
+impl<I> IntoArrowRobj for RecordBatchIterator<I>
+    where
+        I: IntoIterator<Item = std::result::Result<RecordBatch, ArrowError>> + Send + 'static,
+        <I as IntoIterator>::IntoIter: Send,
+    {
+        fn into_arrow_robj(self) -> Result<Robj> {
+            let reader: Box<dyn RecordBatchReader + Send> = Box::new(self);
+            reader.into_arrow_robj()
+        }
+    }
+    
