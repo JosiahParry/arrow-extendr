@@ -27,6 +27,7 @@ use extendr_api::prelude::*;
 use arrow::{
     array::{PrimitiveArray, Array, ArrayData},
     datatypes::{ArrowPrimitiveType, DataType, Field, Schema},
+    error::ArrowError,
     ffi::{to_ffi, FFI_ArrowArray, FFI_ArrowSchema}, 
     ffi_stream::{FFI_ArrowArrayStream, ArrowArrayStreamReader},
     record_batch::{RecordBatch, RecordBatchReader, RecordBatchIterator}
@@ -204,19 +205,6 @@ impl ToArrowRobj for RecordBatch {
     }
 }
 
-
-impl IntoArrowRobj for Box<dyn RecordBatchReader + Send> {
-    fn into_arrow_robj(self) -> Result<Robj> {
-        let mut stream = FFI_ArrowArrayStream::new(self);
-        let stream_ptr = (&mut stream) as *mut FFI_ArrowArrayStream as usize;
-
-        let stream_to_fill = allocate_array_stream(pairlist!())?;
-        let _ = move_pointer(pairlist!(stream_ptr.to_string(), &stream_to_fill));
-
-        Ok(stream_to_fill)
-    }
-}
-
 /// Convert an Arrow struct to an `Robj` 
 /// 
 /// Consumes `self`. Takes an arrow-rs struct and converts it into
@@ -267,5 +255,36 @@ fn to_arrow_robj_stream_reader(reader: ArrowArrayStreamReader) -> Result<Robj> {
 impl IntoArrowRobj for ArrowArrayStreamReader {
     fn into_arrow_robj(self) -> Result<Robj> {
         to_arrow_robj_stream_reader(self)
+    }
+}
+
+
+impl IntoArrowRobj for Box<dyn RecordBatchReader + Send> {
+    fn into_arrow_robj(self) -> Result<Robj> {
+        let mut stream = FFI_ArrowArrayStream::new(self);
+        let stream_ptr = (&mut stream) as *mut FFI_ArrowArrayStream as usize;
+
+        let stream_to_fill = allocate_array_stream(pairlist!())?;
+        let _ = move_pointer(pairlist!(stream_ptr.to_string(), &stream_to_fill));
+
+        Ok(stream_to_fill)
+    }
+}
+
+
+impl IntoArrowRobj for Vec<RecordBatch> {
+    fn into_arrow_robj(self) -> Result<Robj> {
+
+        let schema = self[0].schema();
+
+        let res = self
+            .into_iter()
+            .map(Ok::<RecordBatch, ArrowError>);
+
+        let rbit = arrow::record_batch::RecordBatchIterator::new(res, schema);
+
+        let reader: Box<dyn RecordBatchReader + Send> = Box::new(rbit);
+            
+        reader.into_arrow_robj()
     }
 }
