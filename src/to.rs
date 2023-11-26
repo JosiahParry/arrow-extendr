@@ -26,7 +26,7 @@
 use extendr_api::prelude::*;
 use arrow::{
     array::{PrimitiveArray, Array, ArrayData},
-    datatypes::{ArrowPrimitiveType, DataType, Field, Schema},
+    datatypes::{ArrowPrimitiveType, DataType, Field, Schema, SchemaBuilder},
     error::ArrowError,
     ffi::{to_ffi, FFI_ArrowArray, FFI_ArrowSchema}, 
     ffi_stream::{FFI_ArrowArrayStream, ArrowArrayStreamReader},
@@ -274,6 +274,15 @@ impl IntoArrowRobj for Box<dyn RecordBatchReader + Send> {
 
 impl IntoArrowRobj for Vec<RecordBatch> {
     fn into_arrow_robj(self) -> Result<Robj> {
+
+        // if there is an empty vector we create an empty RecordBatch
+        if self.is_empty() {
+            let sb = SchemaBuilder::new();
+            let schema = sb.finish();
+            let empty_iter = vec![].into_iter();
+            let rb = arrow::record_batch::RecordBatchIterator::new(empty_iter, schema.into());
+            return rb.into_arrow_robj();
+        }
 
         let schema = self[0].schema();
 
