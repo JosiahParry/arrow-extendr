@@ -3,6 +3,13 @@ name = 'arrow_extendr'
 publish = false
 version = '0.1.0'
 edition = '2021'
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/josiahparry/arrow-extendr"
+authors = ["Josiah Parry<josiah.parry@gmail.com>"]
+description = "Provides traits to use Apache Arrow with extendr via arrow-rs and nanoarrow"
+categories = ["development-tools::ffi"]
+keywords = ["arrow", "extendr", "rstats"]
+readme = "README.md"
 
 [lib]
 crate-type = ["staticlib", "lib"]
