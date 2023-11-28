@@ -10,7 +10,7 @@ At present, versions of arrow-rs are not compatible with each other. This means 
 
 - 48.0.1 
 - 49.0.0
-- 49.0.0-geoarrow
+- 49.0.0-geoarrow (not available on crates.io but is the current Git version)
 
 ### Motivating Example
 
