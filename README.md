@@ -4,7 +4,13 @@ arrow-extendr is a crate that facilitates the transfer of [Apache Arrow](https:/
 
 ## Versioning
 
-At present, versions of arrow-rs are not compatible with each other. This means if your crate uses arrow-rs version `48.0.1`, then the arrow-extendr must also use that same version. As such, arrow-extendr uses the same versions as arrow-rs so that it is easy to match the required versions you need. There are two supported versions: 48.0.1 and 49.0.0. 
+At present, versions of arrow-rs are not compatible with each other. This means if your crate uses arrow-rs version `48.0.1`, then the arrow-extendr must also use that same version. As such, arrow-extendr uses the same versions as arrow-rs so that it is easy to match the required versions you need. 
+
+**Versions**:
+
+- 48.0.1 
+- 49.0.0
+- 49.0.0-geoarrow
 
 
 ### Motivating Example
