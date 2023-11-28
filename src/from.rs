@@ -201,7 +201,7 @@ impl FromArrowRobj for ArrayData {
             let _ = nanoarrow_export(robj, c_array_ptr.to_string());
             let _ = nanoarrow_export(&robj_schema, c_schema_ptr.to_string());
 
-            return ffi::from_ffi(array, &schema);
+            return unsafe { ffi::from_ffi(array, &schema) };
         }
 
         let is_array = robj.inherits("Array");
@@ -230,7 +230,7 @@ impl FromArrowRobj for ArrayData {
             )
         );
 
-        ffi::from_ffi(array, &schema)
+        unsafe { ffi::from_ffi(array, &schema) }
     }
 }
 
@@ -282,7 +282,7 @@ impl FromArrowRobj for RecordBatch {
             )
         );
 
-        let res = ffi::from_ffi(array, &schema)?;
+        let res = unsafe { ffi::from_ffi(array, &schema)? };
         let schema = Schema::try_from(&schema)?;
         
         let res_arrays = res.child_data().into_iter()

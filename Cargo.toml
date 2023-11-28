@@ -1,6 +1,6 @@
 [package]
 name = 'arrow_extendr'
-version = '49.0.0'
+version = '49.0.0-geoarrow'
 edition = '2021'
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/josiahparry/arrow-extendr"
@@ -21,5 +21,5 @@ crate-type = ["staticlib", "lib"]
 name = 'arrow_extendr'
 
 [dependencies]
-arrow = { version = "49.0.0", features = ["ffi"] }
+arrow = { git = "https://github.com/apache/arrow-rs", rev="fbbb61d94282165f9bb9f73fb4d00a3af16d4aee", features = ["ffi"] }
 extendr-api = '>=0.6.0'
