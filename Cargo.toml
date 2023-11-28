@@ -21,5 +21,5 @@ crate-type = ["staticlib", "lib"]
 name = 'arrow_extendr'
 
 [dependencies]
-arrow = { version = "48.0.1", features = ["ffi"] }
+arrow = { version = "49.0.0", features = ["ffi"] }
 extendr-api = '>=0.6.0'

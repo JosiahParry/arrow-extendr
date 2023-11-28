@@ -1,6 +1,11 @@
 # arrow_extendr
 
-Pass arrow-rs objects to and from an R session
+arrow-extendr is a crate that facilitates the transfer of [Apache Arrow](https://arrow.apache.org/) memory between R and Rust. It utilizes [extendr](https://extendr.github.io/), the [**`{nanoarrow}`**](https://arrow.apache.org/nanoarrow/0.3.0/r/index.html) R package, and [arrow-rs](https://docs.rs/arrow).
+
+## Versioning
+
+At present, versions of arrow-rs are not compatible with each other. This means if your crate uses arrow-rs version `48.0.1`, then the arrow-extendr must also use that same version. As such, arrow-extendr uses the same versions as arrow-rs so that it is easy to match the required versions you need. There are two supported versions: 48.0.1 and 49.0.0. 
+
 
 ### Motivating Example
 
