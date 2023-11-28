@@ -10,6 +10,12 @@ categories = ["development-tools::ffi"]
 keywords = ["arrow", "extendr", "rstats"]
 readme = "README.md"
 
+include = [
+    "src/*",
+    "Cargo.toml",
+    "README.md"
+]
+
 [lib]
 crate-type = ["staticlib", "lib"]
 name = 'arrow_extendr'
