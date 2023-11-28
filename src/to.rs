@@ -1,18 +1,18 @@
 //! Convert arrow-rs structs into an `Robj`
-//! 
+//!
 //! The traits `ToArrowRobj` and `IntoArrowRobj` provide the methods
 //! `to_arrow_robj()` and `into_arrow_robj()` respectively. The former
-//! takes a reference to self whereas the latter consumes self. 
-//! 
+//! takes a reference to self whereas the latter consumes self.
+//!
 //! Prefer `to_arrow_robj()` for all structs except `ArrowArrayStreamReader`.
-//! 
+//!
 //! ```ignore
 //! fn array_to_robj() -> Result<Robj> {
 //!     let array = Int32Array::from(vec![Some(1), None, Some(3)]);
 //!     array.to_arrow_robj()
 //! }
 //! ```
-//! 
+//!
 //! |      arrow-rs struct     |         R object        |
 //! | -------------------------| ----------------------- |
 //! | `ArrayData`              |`nanoarrow_array`        |
@@ -22,19 +22,19 @@
 //! | `Schema`                 |`nanoarrow_schema`       |
 //! | `RecordBatch`            |`nanoarrow_array_stream` |
 //! | `ArrowArrayStreamReader` |`nanoarrow_array_stream` |
-//! 
-use extendr_api::prelude::*;
+//!
 use arrow::{
-    array::{PrimitiveArray, Array, ArrayData},
+    array::{Array, ArrayData, PrimitiveArray},
     datatypes::{ArrowPrimitiveType, DataType, Field, Schema, SchemaBuilder},
     error::ArrowError,
-    ffi::{to_ffi, FFI_ArrowArray, FFI_ArrowSchema}, 
-    ffi_stream::{FFI_ArrowArrayStream, ArrowArrayStreamReader},
-    record_batch::{RecordBatch, RecordBatchReader, RecordBatchIterator}
+    ffi::{to_ffi, FFI_ArrowArray, FFI_ArrowSchema},
+    ffi_stream::{ArrowArrayStreamReader, FFI_ArrowArrayStream},
+    record_batch::{RecordBatch, RecordBatchIterator, RecordBatchReader},
 };
+use extendr_api::prelude::*;
 
 /// Calls `nanoarrow::nanoarrow_allocate_array()`
-/// 
+///
 /// Requires `{nanoarrow}` to be installed.
 pub fn allocate_array(args: Pairlist) -> Result<Robj> {
     R!("nanoarrow::nanoarrow_allocate_array")
@@ -45,21 +45,20 @@ pub fn allocate_array(args: Pairlist) -> Result<Robj> {
 }
 
 /// Calls `nanoarrow::nanoarrow_allocate_array_stream()`
-/// 
+///
 /// Requires `{nanoarrow}` to be installed.
 pub fn allocate_array_stream(args: Pairlist) -> Result<Robj> {
     R!("nanoarrow::nanoarrow_allocate_array_stream")
-    .expect("`nanoarrow` must be installed")
-    .as_function()
-    .expect("`nanoarrow_allocate_array()` must be available")
-    .call(args)
+        .expect("`nanoarrow` must be installed")
+        .as_function()
+        .expect("`nanoarrow_allocate_array()` must be available")
+        .call(args)
 }
 
-
 /// Calls `nanoarrow::nanoarrow_allocate_schema()`
-/// 
+///
 /// Requires `{nanoarrow}` to be installed.
-pub fn allocate_schema(args: Pairlist) -> Result<Robj>  {
+pub fn allocate_schema(args: Pairlist) -> Result<Robj> {
     R!("nanoarrow::nanoarrow_allocate_schema")
         .expect("`nanoarrow` must be installed")
         .as_function()
@@ -67,9 +66,8 @@ pub fn allocate_schema(args: Pairlist) -> Result<Robj>  {
         .call(args)
 }
 
-
 /// Calls `nanoarrow::nanoarrow_pointer_move()`
-/// 
+///
 /// Requires `{nanoarrow}` to be installed.
 pub fn move_pointer(args: Pairlist) -> Result<Robj> {
     R!("nanoarrow::nanoarrow_pointer_move")
@@ -79,8 +77,8 @@ pub fn move_pointer(args: Pairlist) -> Result<Robj> {
         .call(args)
 }
 
-/// Calls `nanoarrow::nanoarrow_array_set_schema()` 
-/// 
+/// Calls `nanoarrow::nanoarrow_array_set_schema()`
+///
 /// Requires `{nanoarrow}` to be installed.
 pub fn set_array_schema(arr: &Robj, schema: &Robj) {
     let _ = R!("nanoarrow::nanoarrow_array_set_schema")
@@ -90,11 +88,11 @@ pub fn set_array_schema(arr: &Robj, schema: &Robj) {
         .call(pairlist!(arr, schema));
 }
 
-/// Convert an Arrow struct to an `Robj` 
-/// 
+/// Convert an Arrow struct to an `Robj`
+///
 /// Does not consume `self`. Takes an arrow-rs struct and converts it into
 /// a `{nanoarrow}` S3 object of class `nanoarrow_array`, `nanoarrow_array_stream`, or `nanoarrow_schema`.
-/// 
+///
 /// **Requires `nanoarrow` to be available**.
 pub trait ToArrowRobj {
     fn to_arrow_robj(&self) -> Result<Robj>;
@@ -102,15 +100,14 @@ pub trait ToArrowRobj {
 
 impl ToArrowRobj for ArrayData {
     fn to_arrow_robj(&self) -> Result<Robj> {
-        // take array data and prepare for FFI 
-        let (ffi_array, ffi_schema) = to_ffi(self)
-        .expect("success converting arrow data");
+        // take array data and prepare for FFI
+        let (ffi_array, ffi_schema) = to_ffi(self).expect("success converting arrow data");
 
         // extract array pointer. we need it as a string to be used by arrow R package
         let ffi_array_ptr = &ffi_array as *const FFI_ArrowArray as usize;
         let arry_addr_chr = ffi_array_ptr.to_string();
 
-        // same deal but with the schema 
+        // same deal but with the schema
         let ffi_schema_ptr = &ffi_schema as *const FFI_ArrowSchema as usize;
         let schema_addr_chr = ffi_schema_ptr.to_string();
 
@@ -151,12 +148,9 @@ impl ToArrowRobj for Field {
     }
 }
 
-
 impl ToArrowRobj for Schema {
     fn to_arrow_robj(&self) -> Result<Robj> {
-
-        let ffi_schema = FFI_ArrowSchema::try_from(self)
-            .expect("valid Schema");
+        let ffi_schema = FFI_ArrowSchema::try_from(self).expect("valid Schema");
 
         // allocate and get pntr address
         let ffi_schema_ptr = &ffi_schema as *const FFI_ArrowSchema as usize;
@@ -167,26 +161,24 @@ impl ToArrowRobj for Schema {
 
         // fill the schema with the FFI_ArrowSchema
         let _ = move_pointer(pairlist!(schema_addr_chr, &schema_to_fill));
-        
+
         Ok(schema_to_fill)
     }
 }
 
 impl ToArrowRobj for DataType {
     fn to_arrow_robj(&self) -> Result<Robj> {
-
-        let ffi_schema = FFI_ArrowSchema::try_from(self)
-            .expect("valid Schema");
+        let ffi_schema = FFI_ArrowSchema::try_from(self).expect("valid Schema");
 
         let ffi_schema_ptr = &ffi_schema as *const FFI_ArrowSchema as usize;
         let schema_addr_chr = ffi_schema_ptr.to_string();
-        
+
         // allocate the schema
         let schema_to_fill = allocate_schema(pairlist!())?;
 
         // fill the schema with the FFI_ArrowSchema
         let _ = move_pointer(pairlist!(schema_addr_chr, &schema_to_fill));
-        
+
         Ok(schema_to_fill)
     }
 }
@@ -205,11 +197,11 @@ impl ToArrowRobj for RecordBatch {
     }
 }
 
-/// Convert an Arrow struct to an `Robj` 
-/// 
+/// Convert an Arrow struct to an `Robj`
+///
 /// Consumes `self`. Takes an arrow-rs struct and converts it into
 /// a `{nanoarrow}` S3 object of class `nanoarrow_array`, `nanoarrow_array_stream`, or `nanoarrow_schema`.
-/// 
+///
 /// **Requires `nanoarrow` to be available**.
 pub trait IntoArrowRobj {
     fn into_arrow_robj(self) -> Result<Robj>;
@@ -223,7 +215,7 @@ macro_rules! impl_into_arrow {
                 self.to_arrow_robj()
             }
         }
-    }
+    };
 }
 
 impl_into_arrow!(ArrayData);
@@ -242,14 +234,13 @@ impl<T: ArrowPrimitiveType> IntoArrowRobj for PrimitiveArray<T> {
 /// Function that will take an ArrowArrayStreamReader and turn into Robj
 fn to_arrow_robj_stream_reader(reader: ArrowArrayStreamReader) -> Result<Robj> {
     let reader: Box<dyn RecordBatchReader + Send> = Box::new(reader);
-        let mut stream = FFI_ArrowArrayStream::new(reader);
-        let stream_ptr = (&mut stream) as *mut FFI_ArrowArrayStream as usize;
+    let mut stream = FFI_ArrowArrayStream::new(reader);
+    let stream_ptr = (&mut stream) as *mut FFI_ArrowArrayStream as usize;
 
-        let stream_to_fill = allocate_array_stream(pairlist!())?;
-        let _ = move_pointer(pairlist!(stream_ptr.to_string(), &stream_to_fill));
+    let stream_to_fill = allocate_array_stream(pairlist!())?;
+    let _ = move_pointer(pairlist!(stream_ptr.to_string(), &stream_to_fill));
 
-        Ok(stream_to_fill)
-
+    Ok(stream_to_fill)
 }
 
 impl IntoArrowRobj for ArrowArrayStreamReader {
@@ -257,7 +248,6 @@ impl IntoArrowRobj for ArrowArrayStreamReader {
         to_arrow_robj_stream_reader(self)
     }
 }
-
 
 impl IntoArrowRobj for Box<dyn RecordBatchReader + Send> {
     fn into_arrow_robj(self) -> Result<Robj> {
@@ -271,10 +261,8 @@ impl IntoArrowRobj for Box<dyn RecordBatchReader + Send> {
     }
 }
 
-
 impl IntoArrowRobj for Vec<RecordBatch> {
     fn into_arrow_robj(self) -> Result<Robj> {
-
         // if there is an empty vector we create an empty RecordBatch
         if self.is_empty() {
             let sb = SchemaBuilder::new();
@@ -286,27 +274,23 @@ impl IntoArrowRobj for Vec<RecordBatch> {
 
         let schema = self[0].schema();
 
-        let res = self
-            .into_iter()
-            .map(Ok::<RecordBatch, ArrowError>);
+        let res = self.into_iter().map(Ok::<RecordBatch, ArrowError>);
 
         let rbit = arrow::record_batch::RecordBatchIterator::new(res, schema);
 
         let reader: Box<dyn RecordBatchReader + Send> = Box::new(rbit);
-            
+
         reader.into_arrow_robj()
     }
 }
 
-
 impl<I> IntoArrowRobj for RecordBatchIterator<I>
-    where
-        I: IntoIterator<Item = std::result::Result<RecordBatch, ArrowError>> + Send + 'static,
-        <I as IntoIterator>::IntoIter: Send,
-    {
-        fn into_arrow_robj(self) -> Result<Robj> {
-            let reader: Box<dyn RecordBatchReader + Send> = Box::new(self);
-            reader.into_arrow_robj()
-        }
+where
+    I: IntoIterator<Item = std::result::Result<RecordBatch, ArrowError>> + Send + 'static,
+    <I as IntoIterator>::IntoIter: Send,
+{
+    fn into_arrow_robj(self) -> Result<Robj> {
+        let reader: Box<dyn RecordBatchReader + Send> = Box::new(self);
+        reader.into_arrow_robj()
     }
-    
+}

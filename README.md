@@ -12,7 +12,6 @@ At present, versions of arrow-rs are not compatible with each other. This means 
 - 49.0.0
 - 49.0.0-geoarrow
 
-
 ### Motivating Example
 
 Say we have the following `DBI` connection which we will send requests to using arrow.
