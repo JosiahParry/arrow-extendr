@@ -1,3 +1,4 @@
 /.vscode/
 /target
 .Rproj.user
+*/.DS_store
