@@ -17,7 +17,7 @@ include = [
 ]
 
 # matches arrow 
-rust-version = "1.62"
+rust-version = "1.70.0"
 
 [lib]
 crate-type = ["staticlib", "lib"]
