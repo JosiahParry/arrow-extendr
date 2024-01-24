@@ -16,6 +16,9 @@ include = [
     "README.md"
 ]
 
+# matches arrow 
+rust-version = "1.70.0"
+
 [lib]
 crate-type = ["staticlib", "lib"]
 name = 'arrow_extendr'
