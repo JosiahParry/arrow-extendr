@@ -1,4 +1,4 @@
-//! Convert arrow-rs objects to an `Robj`
+//! Create arrow-rs objects from an `Robj`
 //!
 //! ```ignore
 //! fn array_from_r(field: Robj) -> Result<ArrayData> {
