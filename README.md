@@ -2,16 +2,16 @@
 
 arrow-extendr is a crate that facilitates the transfer of [Apache Arrow](https://arrow.apache.org/) memory between R and Rust. It utilizes [extendr](https://extendr.github.io/), the [**`{nanoarrow}`**](https://arrow.apache.org/nanoarrow/0.3.0/r/index.html) R package, and [arrow-rs](https://docs.rs/arrow).
 
-
 ## Versioning
 
-At present, versions of arrow-rs are not compatible with each other. This means if your crate uses arrow-rs version `48.0.1`, then the arrow-extendr must also use that same version. As such, arrow-extendr uses the same versions as arrow-rs so that it is easy to match the required versions you need. 
+At present, versions of arrow-rs are not compatible with each other. This means if your crate uses arrow-rs version `48.0.1`, then the arrow-extendr must also use that same version. As such, arrow-extendr uses the same versions as arrow-rs so that it is easy to match the required versions you need.
 
 **Versions**:
 
+- 51.0.0
 - 50.0.0 (compatible with geoarrow-rs 0.1.0)
 - 49.0.0-geoarrow (not available on crates.io but is the current Git version)
-- 48.0.1 
+- 48.0.1
 - 49.0.0
 
 ### Motivating Example
@@ -81,11 +81,11 @@ process_stream(query)
 
 ## Using arrow-extendr in a package
 
-To use arrow-extendr in an R package first create an R package and make it an extendr package with: 
+To use arrow-extendr in an R package first create an R package and make it an extendr package with:
 
 ```r
 usethis::create_package("my_package")
 rextendr::use_extendr();
 ```
 
-Next, you have to ensure that `nanoarrow` is a dependency of the package since arrow-extendr will call functions from nanoarrow to convert between R and Arrow memory. To do this run `usethis::use_package("nanoarrow")` to add it to your Imports field in the DESCRIPTION file. 
+Next, you have to ensure that `nanoarrow` is a dependency of the package since arrow-extendr will call functions from nanoarrow to convert between R and Arrow memory. To do this run `usethis::use_package("nanoarrow")` to add it to your Imports field in the DESCRIPTION file.
