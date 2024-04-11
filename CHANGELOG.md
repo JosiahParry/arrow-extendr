@@ -1,3 +1,11 @@
+## 51.0.0
+
+- Release compatible with arrow-rs 51.0.0
+
+## 50.0.0
+
+- Release compatible with arrow-rs 50.0.0
+
 ## 49.0.0-geoarrow (2027-11-28)
 
 - Release compatible with geoarrow-rs based on [the Cargo.toml](https://github.com/geoarrow/geoarrow-rs/blob/9a0df7fad02fd5d4c84a23fe3ebf1a5d05e71d1e/Cargo.toml)

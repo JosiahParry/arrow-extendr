@@ -1,6 +1,6 @@
 [package]
 name = 'arrow_extendr'
-version = '50.0.0'
+version = '51.0.0'
 edition = '2021'
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/josiahparry/arrow-extendr"
@@ -10,13 +10,9 @@ categories = ["development-tools::ffi"]
 keywords = ["arrow", "extendr", "rstats"]
 readme = "README.md"
 
-include = [
-    "src/*",
-    "Cargo.toml",
-    "README.md"
-]
+include = ["src/*", "Cargo.toml", "README.md"]
 
-# matches arrow 
+# matches arrow
 rust-version = "1.70.0"
 
 [lib]
@@ -24,5 +20,5 @@ crate-type = ["staticlib", "lib"]
 name = 'arrow_extendr'
 
 [dependencies]
-arrow = { version = "50.0.0", features = ["ffi"] }
+arrow = { version = "51.0.0", features = ["ffi"] }
 extendr-api = '>=0.6.0'
