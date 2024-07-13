@@ -1,3 +1,7 @@
+## 52.0.0
+
+- Release compatible with arrow-rs 52.0.0
+
 ## 51.0.0
 
 - Release compatible with arrow-rs 51.0.0
